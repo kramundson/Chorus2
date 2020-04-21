@@ -423,6 +423,43 @@ def main():
 
     print("Job finshed!!")
 
+# def input_is_assembly(infile, min_len=1000):
+def input_is_assembly(infile, min_len=1000):
+    """
+    Check whether args.input is a genome assembly or unassembled reads.
+    
+    Hacky interpretation from length of first sequence. If less than min_len, assumed a
+    short read
+    
+    return boolean
+    """
+    
+    with open(infile, 'r') as f:
+        name1 = f.readline()[0].upper()
+        len_seq1 = len(f.readline())
+        name2 = f.readline()[0].upper()
+    
+    # assembly with text wrap
+    if name1 == ">" and name2 != ">":
+        
+        assembly = True
+        
+    # assembly with no text wrap
+    elif name1 == ">" and name2 == ">" and lenseq1 >= min_len:
+        
+        assembly = True
+    
+    # FASTA reads
+    elif name1 == ">" and name2 == ">" and lenseq1 <= min_len:
+        
+        assembly = False
+    
+    else:
+        
+        sys.exit("Check your input format and try again")
+        
+    return assembly
+
 def probefilter(nowpbcounter):
 
     sequence, seqname, start = nowpbcounter['seq'].split('\t')

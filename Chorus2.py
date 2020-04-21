@@ -111,10 +111,19 @@ def main():
           jfkmerfile, "kmerbuild:", kmerbuild, "bwabuild:", bwabuild, "threads:", args.threads)
 
     # Build Jellyfish index
-    if kmerbuild:
+    # TODO efficiently determine whether input is an assembled genome or unassembled reads
+    # leave as much of this structure intact as possible
+    
+    if not kmerbuild:
+        
+        print("Use", jfkmerfile)
+    
+    elif kmerbuild and input_is_assembly(args.input):
 
-        jfcount = jellyfish.jfcount(jfpath=args.jellyfish, mer=kmer, infile=args.genome, output=jfkmerfile,
+        jfcount = jellyfish.jfcount_assembly(jfpath=args.jellyfish, mer=kmer, infile=args.genome, output=jfkmerfile,
                                     threads=args.threads, lowercount=lowercount, size=jfsize)
+        # jfcount = jellyfish.jfcount(jfpath=args.jellyfish, mer=kmer, infile=args.genome, output=jfkmerfile,
+        #                            threads=args.threads, lowercount=lowercount, size=jfsize)
 
         if jfcount:
 
@@ -125,6 +134,12 @@ def main():
             print("JellyFish Count Error!!!")
 
             sys.exit(1)
+
+    else if kmerbuild and not input_is_assembly(args.input):
+        
+        # left as legacy function
+        jfcount = jellyfish.jfcount(jfpath=args.jellyfish, mer=kmer, infile=args.genome, output=jfkmerfile,
+                                   threads=args.threads, lowercount=lowercount, size=jfsize)
 
     else:
 

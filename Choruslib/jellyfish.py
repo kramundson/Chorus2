@@ -3,6 +3,7 @@ import subprocess
 import platform
 import os
 import signal
+import sys
 import time
 from Choruslib import subprocesspath
 
@@ -19,9 +20,92 @@ def sysinfo():
 
     return(machine, system)
 
+# def input_is_assembly(infile, min_len=1000):
+def input_is_assembly(infile, min_len=1000):
+    """
+    Check whether args.input is a genome assembly or unassembled reads.
+    
+    Hacky interpretation from length of first sequence. If less than min_len, assumed a
+    short read
+    
+    return boolean
+    """
+    
+    with open(infile, 'r') as f:
+        name1 = f.readline()[0].upper()
+        len_seq1 = len(f.readline())
+        name2 = f.readline()[0].upper()
+    
+    # assembly with text wrap
+    if name1 == ">" and name2 != ">":
+        
+        assembly = True
+        
+    # assembly with no text wrap
+    elif name1 == ">" and name2 == ">" and lenseq1 >= min_len:
+        
+        assembly = True
+    
+    # FASTA reads
+    elif name1 == ">" and name2 == ">" and lenseq1 <= min_len:
+        
+        assembly = False
+    
+    else:
+        
+        sys.exit("Check your input format and try again")
+        
+    return assembly
 
 def jfcount(jfpath, mer, output, infile,threads=1,  size='100M', lowercount=2):
     """
+    Update: Original function, redundant with jfcount_reads. Kept for debugging.
+    
+    Only keep >=2 kerm, if kmer==1 score =0
+    :param jfpath:
+    :param mer:
+    :param output:
+    :param infile:
+    :param threads:
+    :param size:
+    :param lowercount:
+    :return:
+    """
+
+    jfpath = subprocesspath.subprocesspath(jfpath)
+
+    output = subprocesspath.subprocesspath(output)
+
+    infile = subprocesspath.subprocesspath(infile)
+
+    jfcountcommand = ' '.join([jfpath, 'count', '--canonical', '-m', str(mer), '-L', str(lowercount),
+                               '-t', str(threads), '-o', str(output),  '-s', str(size),  infile])
+
+    print(jfcountcommand)
+
+    p = subprocess.Popen(jfcountcommand, shell=True)
+
+    try:
+
+        outs, errs = p.communicate()
+
+        return True
+
+    except Exception:
+
+        p.kill()
+
+        outs, errs = p.communicate()
+
+        print("Something wrong in jellyfish count")
+
+        return False
+
+def jfcount_reads(jfpath, mer, output, infile,threads=1,  size='100M', lowercount=2):
+    """
+    Update: Redundant with original jfcount function. KRA will keep this version in future
+    versions if putting k-mer scoring back in Chorus2.
+    
     Only keep >=2 kerm, if kmer==1 score =0
     :param jfpath:
     :param mer:
@@ -64,6 +148,52 @@ def jfcount(jfpath, mer, output, infile,threads=1,  size='100M', lowercount=2):
 
 #../jellyfish/x86_64-Darwin/bin/jellyfish count  -m 32 -s 100M -t 4 --bc Zea_mays_32mer.bc -L 2 -o Zea_mays_32mer_L2.jf  ../TestData/Zea_mays.AGPv3.23.dna.genome.fa
 
+def jfcount_assembly(jfpath, mer, output, infile, threads=1, size='100M', lowercount=2):
+    """
+    Update of jfcount function: Removed --canonical from jfcountcommand, this is not
+    suitable for counting k-mers from a genome assembly
+    
+    Only keep >=2 kerm, if kmer==1 score =0
+    :param jfpath:
+    :param mer:
+    :param output:
+    :param infile:
+    :param threads:
+    :param size:
+    :param lowercount:
+    :return:
+    """
+
+    jfpath = subprocesspath.subprocesspath(jfpath)
+
+    output = subprocesspath.subprocesspath(output)
+
+    infile = subprocesspath.subprocesspath(infile)
+    
+    jfcountcommand = ' '.join([jfpath, 'count', '-m', str(mer), '-L', str(lowercount),
+                               '-t', str(threads), '-o', str(output),  '-s', str(size),  infile])
+    # jfcountcommand = ' '.join([jfpath, 'count', '--canonical', '-m', str(mer), '-L', str(lowercount),
+    #                            '-t', str(threads), '-o', str(output),  '-s', str(size),  infile])
+
+    print(jfcountcommand)
+
+    p = subprocess.Popen(jfcountcommand, shell=True)
+
+    try:
+
+        outs, errs = p.communicate()
+
+        return True
+
+    except Exception:
+
+        p.kill()
+
+        outs, errs = p.communicate()
+
+        print("Something wrong in jellyfish count")
+
+        return False
 
 def jfgeneratorscount(jfpath, mer, output, generators,threads=1,  size='100M'):
     """

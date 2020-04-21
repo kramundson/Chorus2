@@ -135,7 +135,7 @@ def main():
 
             sys.exit(1)
 
-    else if kmerbuild and not input_is_assembly(args.input):
+    elif kmerbuild and not input_is_assembly(args.input):
         
         # left as legacy function
         jfcount = jellyfish.jfcount(jfpath=args.jellyfish, mer=kmer, infile=args.genome, output=jfkmerfile,
